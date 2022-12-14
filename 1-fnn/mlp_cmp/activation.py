@@ -55,7 +55,7 @@ def softmax(prime: bool, in_ft: np.array, fw_out: np.array=None) -> np.array:
         # Create two 2D arrays with 1 row to create a Jacobian matrix
         fw_out = np.reshape(fw_out, (1, -1))
         grad = np.reshape(in_ft, (1, -1))
-
+        
         d_softmax = (
             fw_out * np.identity(fw_out.size)
             - np.dot(fw_out.T, fw_out))

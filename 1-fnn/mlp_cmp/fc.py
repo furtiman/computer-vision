@@ -34,13 +34,13 @@ class FC:
         wm - weight matrix of size (num_in_ft x num_out_ft)
         bs - vector of all neurons' biases (size = num_out_ft)
         """
-        total_fc_num += 1  # Keep track of total fc layers number
+        FC.total_fc_num += 1  # Keep track of total fc layers number
 
         self.num_in_ft = num_in_ft
         self.num_out_ft = num_out_ft
         self.activation = activation  # Activation function
         self.wm = np.random.default_rng(1).random((num_in_ft, num_out_ft))
-        self.bs = np.zeros(1, num_out_ft)
+        self.bs = np.zeros((1, num_out_ft))
         self.input = None
         self.logits = None
         self.output = None
