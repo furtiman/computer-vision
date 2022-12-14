@@ -46,6 +46,7 @@ def softmax(prime: bool, in_ft: np.array, fw_out: np.array=None) -> np.array:
         f'(x) inspired by and understood with help of:
             https://e2eml.school/softmax.html
             https://gitlab.com/brohrer/cottonwood/
+            https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1
     '''
     if not prime:
         e_x = np.exp(in_ft - np.max(in_ft))
