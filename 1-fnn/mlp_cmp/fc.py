@@ -1,5 +1,6 @@
 import numpy as np
 from collections.abc import Callable
+from . import activation as a
 
 # Resources used:
 # Confirmation of initial design and understanding of how to implement backward propagation:
@@ -36,21 +37,24 @@ class FC:
         """
         FC.total_fc_num += 1  # Keep track of total fc layers number
 
+        self.seq_num = FC.total_fc_num
         self.num_in_ft = num_in_ft
         self.num_out_ft = num_out_ft
         self.activation = activation  # Activation function
-        self.wm = np.random.default_rng(1).random((num_in_ft, num_out_ft))
+        self.wm = np.random.default_rng(1).random((num_in_ft, num_out_ft)) - 0.7
         self.bs = np.zeros((1, num_out_ft))
         self.input = None
         self.logits = None
         self.output = None
+        print(
+            f"---------Init FC{FC.total_fc_num}: {self.num_in_ft} -> {self.num_out_ft}-----------"
+        )
 
     def fw(self, fw_in: np.array) -> np.array:
         """Apply weights and activation function"""
         self.input = fw_in
-        self.logits = np.dot(fw_in, self.wm) + self.bs # Yin
-        self.fw_out = self.activation(prime=False,
-                                      in_ft=self.logits)
+        self.logits = np.dot(fw_in, self.wm) + self.bs  # Yin
+        self.fw_out = self.activation(prime=False, in_ft=self.logits)
         return self.fw_out
 
     def bw(self, bw_in: np.array, learning_rate: float) -> np.array:
@@ -61,18 +65,22 @@ class FC:
 
         # Activation derivative dY/dYin(Yin)
         activation_err = self.activation(prime=True,
-                                         in_ft=self.logits, fw_out=self.fw_out)
+                                            in_ft=self.logits,
+                                            fw_out=self.fw_out) * bw_in
+        if self.activation == a.softmax:
+            activation_err = np.sum(activation_err, axis=0).reshape((-1, 1)).T
 
         # Loss derivative over weights (dL/dW)
-        weight_err = np.dot(self.input.T, bw_in * activation_err)
+        weight_err = np.dot(self.input.T, activation_err)
 
         # Loss Derivative over previous layer input (dL/din_ft)
         # Multiplying by wight matrix, because the derivative is wrt in_ft
         # and by chain rule, the last term is d(out_before_act)/din_ft = weights
-        bw_out = np.dot(bw_in * activation_err, self.wm.T)
+        bw_out = np.dot(activation_err, self.wm.T)
 
         # Update weights (w1 = w0 - n * dL/dW) - after the old weight matrix was used
         self.wm = self.wm - learning_rate * weight_err
+        self.bs = self.bs - learning_rate * activation_err
 
         # Mod 4 slide 80
         return bw_out  # Propagated error to next layer
