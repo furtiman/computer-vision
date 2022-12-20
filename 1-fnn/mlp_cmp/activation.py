@@ -9,8 +9,7 @@ def relu(prime: bool, in_ft: np.array, fw_out: np.array=None) -> np.array:
     if not prime:
         return np.maximum(0, in_ft)
     else:
-        rc = 0 if in_ft <= 0 else 1
-        return rc
+        return in_ft.clip(min=0)
 
 def softplus(prime: bool, in_ft: np.array, fw_out: np.array=None) -> np.array:
     ''' SoftPlus:
@@ -48,19 +47,29 @@ def softmax(prime: bool, in_ft: np.array, fw_out: np.array=None) -> np.array:
             https://gitlab.com/brohrer/cottonwood/
             https://towardsdatascience.com/derivative-of-the-softmax-function-and-the-categorical-cross-entropy-loss-ffceefc081d1
     '''
+    # e = np.exp(in_ft)
+    # softmax = e / e.sum()
+    e = np.exp(in_ft - np.max(in_ft))
+    softmax = e / e.sum(axis=0, keepdims=True)
     if not prime:
-        e_x = np.exp(in_ft - np.max(in_ft))
-        return e_x / e_x.sum(axis = 0, keepdims = True)
+        return softmax
+    # else:
+    #     SM = in_ft.reshape((-1, 1))
+    #     return np.diagflat(in_ft) - np.dot(SM, SM.T)
     else:
-        # Create two 2D arrays with 1 row to create a Jacobian matrix
-        fw_out = np.reshape(fw_out, (1, -1))
-        grad = np.reshape(in_ft, (1, -1))
-        
-        d_softmax = (
-            fw_out * np.identity(fw_out.size)
-            - np.dot(fw_out.T, fw_out))
-        
-        return np.dot(grad, d_softmax).ravel()
+        I = np.eye(in_ft.shape[0])
+        ret = softmax * (I - softmax.T)
+        # print(ret)
+        return ret
+        # # Create two 2D arrays with 1 row to create a Jacobian matrix
+        # fw_out = np.reshape(fw_out, (1, -1))
+        # grad = np.reshape(in_ft, (1, -1))
+
+        # d_softmax = (
+        #     fw_out * np.identity(fw_out.size)
+        #     - np.dot(fw_out.T, fw_out))
+    
+        # return np.dot(grad, d_softmax).ravel()
 
 def test_softmax(in_ft: np.array, test_num: int):
     # TODO: test softmax derivative too
