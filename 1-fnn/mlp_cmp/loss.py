@@ -15,10 +15,17 @@ def ce_loss(prime: bool, p: np.array, t: np.array):
     '''
     # Since both target and prediction are np arrays, we can compute
     # Hadamard product of them and get a sum of elements after
-    p = p.clip(min=1e-8, max=None)
+    # p = p.clip(min=1e-8, max=None)
     if not prime:
         loss = -np.sum(t * np.log(p))
     else:
         loss = t * (-1 / p)
-
     return loss
+
+# loss function and its derivative
+def mse(prime: bool, p: np.array, t: np.array):
+    if not prime:
+        return np.mean(np.power(t - p, 2))
+        # return np.mean(np.power(t - p, 2))
+    else:
+        return 2*(p - t)/t.size

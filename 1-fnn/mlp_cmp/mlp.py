@@ -47,15 +47,20 @@ class MLP:
     ):
 
         num_s = len(train_samples)
-        batch_loss = 0
-        loss_curve = []
+        accuracy_sum = 0
 
         for e in tqdm(range(epochs)):
             err = 0
+            total_p = 0
+            correct_p = 0
             if self.gd_type == "stoc":
                 for i in range(num_s):
-                    p = self.predict(train_samples[i])
+                    total_p += 1
+                    p = train_samples[i].reshape(len(train_samples[i]), 1).T
+                    p = self.predict(p)
                     t = train_labels[i]
+                    if np.argmax(p) == np.argmax(t):
+                        correct_p += 1
 
                     err += self.loss(prime=False, p=p, t=t)
                     gradient = self.loss(prime=True, p=p, t=t)
@@ -64,16 +69,19 @@ class MLP:
                         gradient = l.bw(gradient, l_rate)
                         # print(gradient)
                 err /= num_s
-                loss_curve.append(err)
+
             elif self.gd_type == "bat":
                 gradient = 0
 
                 # Forward - accumulate loss and gradient of all training set
                 for i in range(num_s):
+                    total_p += 1
                     # Go through all FC layers
                     p = self.predict(train_samples[i])
                     t = train_labels[i]
 
+                    if np.argmax(p) == np.argmax(t):
+                        correct_p += 1
                     err += self.loss(prime=False, p=p, t=t)
                     gradient += self.loss(prime=True, p=p, t=t)
                 err /= num_s
@@ -83,12 +91,12 @@ class MLP:
                     # Weights are updated in every layer, so the
                     # end gradient is not needed
                     gradient = l.bw(gradient, l_rate)
-
-            if e%100 == 0:
-                    print(f"{self.gd_type}: Epoch #{e} - avg CE = {err}")
-        plt.plot(loss_curve)
-        plt.show()
-
+            accuracy_sum += correct_p / total_p
+            if e%10 == 0:
+                print(f"{self.gd_type}: Epoch #{e} - avg loss = {err}"
+                      f", avg Accuracy = {accuracy_sum / (e + 1)}"
+                      f", C: {correct_p}, T: {total_p}")
+        print(f"Total mean accuracy during training {accuracy_sum / epochs}")
 
     def validate():
         pass
@@ -99,10 +107,16 @@ class MLP:
         test_labels: np.array,
     ):
         err = 0
+        total = 0
+        correct = 0
         for i, s in enumerate(test_samples):
+            total += 1
             p = self.predict(s)
             t = test_labels[i]
-            p_class = np.argmax(p) # index of prediction
-            t_class = np.argmax(t) # index of label
+            # p_class = np.argmax(p) # index of prediction
+            # t_class = np.argmax(t) # index of label
+            if np.argmax(p) == np.argmax(t):
+                correct += 1
             err += self.loss(prime=False, p=p, t=t)
+        print(f"Accuracy = {correct} / {total} = {correct / total}")
         print(f"Avg test err = {err / len(test_samples)}")

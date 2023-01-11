@@ -53,23 +53,19 @@ def softmax(prime: bool, in_ft: np.array, fw_out: np.array=None) -> np.array:
     softmax = e / e.sum(axis=0, keepdims=True)
     if not prime:
         return softmax
-    # else:
-    #     SM = in_ft.reshape((-1, 1))
-    #     return np.diagflat(in_ft) - np.dot(SM, SM.T)
-    else:
-        I = np.eye(in_ft.shape[0])
-        ret = softmax * (I - softmax.T)
-        # print(ret)
-        return ret
-        # # Create two 2D arrays with 1 row to create a Jacobian matrix
-        # fw_out = np.reshape(fw_out, (1, -1))
-        # grad = np.reshape(in_ft, (1, -1))
 
-        # d_softmax = (
-        #     fw_out * np.identity(fw_out.size)
-        #     - np.dot(fw_out.T, fw_out))
-    
-        # return np.dot(grad, d_softmax).ravel()
+    else:
+        grad = np.zeros((1, len(fw_out[0])))
+        # print(fw_out)
+        # print(grad)
+        for i in range(len(fw_out)):
+            for j in range(len(fw_out)):
+
+                if i == j:
+                    grad[i] = grad[i] + (fw_out[i] * (1 - fw_out[i]))
+                else: 
+                    grad[i] = grad[i] + (-1 * fw_out[i] * fw_out[j])
+        return grad
 
 def test_softmax(in_ft: np.array, test_num: int):
     # TODO: test softmax derivative too

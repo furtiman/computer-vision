@@ -1,17 +1,18 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from mlp_cmp import mlp, fc, activation as a, loss as l
+from mlp_cmp import mlp, fc, activation as a, loss as l, al
 
-TRAIN_SIZE = 1000
-TEST_SIZE = 100
-EPOCHS = 1000
-L_RATE = 0.01
+TRAIN_SIZE = 10000
+TEST_SIZE = 1000
+EPOCHS = 400
+L_RATE = 0.1
 
-FC1_NEURONS = 16
-FC2_NEURONS = 16
-GDESCENT_TYPE = 'stoc' # 'stoc' | 'bat'
-LOSS = l.ce_loss
+FC1_NEURONS = 32
+FC2_NEURONS = 32
+GDESCENT_TYPE = "stoc"  # 'stoc' | 'bat'
+# LOSS = l.ce_loss
+LOSS = l.mse
 
 if __name__ == "__main__":
     # Mnist dataset loaded with "fetch_openml("mnist_784")", and then
@@ -37,25 +38,27 @@ if __name__ == "__main__":
 
     perceptron = mlp.MLP(in_size, out_size, LOSS, GDESCENT_TYPE)
 
-    fc1 = fc.FC(num_in_ft=in_size, num_out_ft=FC1_NEURONS,
-                activation=a.sigmoid)
+    fc1 = fc.FC(num_in_ft=in_size, num_out_ft=FC1_NEURONS)
     perceptron.add_layer(fc1)
+    al1 = al.AL(activation=a.softplus)
+    perceptron.add_layer(al1)
 
-    fc2 = fc.FC(num_in_ft=FC1_NEURONS, num_out_ft=FC2_NEURONS,
-                activation=a.sigmoid)
+    fc2 = fc.FC(num_in_ft=FC1_NEURONS, num_out_ft=FC2_NEURONS)
     perceptron.add_layer(fc2)
+    al2 = al.AL(activation=a.sigmoid)
+    perceptron.add_layer(al2)
 
-    out_l = fc.FC(num_in_ft=FC2_NEURONS, num_out_ft=out_size,
-                  activation=a.softmax)
+    out_l = fc.FC(num_in_ft=FC2_NEURONS, num_out_ft=out_size)
     perceptron.add_layer(out_l)
+    al3 = al.AL(activation=a.sigmoid)
+    perceptron.add_layer(al3)
     print("------------Output Layer^--------------")
 
     d_train = data[:TRAIN_SIZE]
-    d_train = d_train.reshape(d_train.shape[0], 1, d_train.shape[1])
     t_train = target_v[:TRAIN_SIZE]
 
-    d_test = data[TRAIN_SIZE:TRAIN_SIZE+TEST_SIZE]
-    t_test = target_v[TRAIN_SIZE:TRAIN_SIZE+TEST_SIZE]
+    d_test = data[TRAIN_SIZE : TRAIN_SIZE + TEST_SIZE]
+    t_test = target_v[TRAIN_SIZE : TRAIN_SIZE + TEST_SIZE]
 
     perceptron.train(d_train, t_train, EPOCHS, L_RATE)
     perceptron.test(d_test, t_test)
