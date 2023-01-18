@@ -1,5 +1,5 @@
 import numpy as np
-from tqdm import tqdm # Fro status bar during training
+from tqdm import tqdm  # Fro status bar during training
 from . import activation, loss, fc
 from collections.abc import Callable
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ class MLP:
         loss: Callable[
             [(bool, np.array, np.array)],
         ],
-        gd_type: str = "stoc",
+        # gd_type: str = "stoc",
         bat_size: int = 1,
     ) -> None:
         """
@@ -21,7 +21,7 @@ class MLP:
         """
         self.in_size = in_size
         self.out_size = out_size
-        self.gd_type = gd_type
+        # self.gd_type = gd_type
         self.bat_size = bat_size
         self.loss = loss
 
@@ -49,53 +49,50 @@ class MLP:
         num_s = len(train_samples)
         accuracy_sum = 0
 
+        indices = np.random.permutation(
+            train_samples.shape[0]
+        )  # Shuffle indices of data
+
         for e in tqdm(range(epochs)):
-            err = 0
             total_p = 0
             correct_p = 0
-            if self.gd_type == "stoc":
-                for i in range(num_s):
-                    total_p += 1
-                    p = train_samples[i].reshape(len(train_samples[i]), 1).T
-                    p = self.predict(p)
-                    t = train_labels[i]
-                    if np.argmax(p) == np.argmax(t):
-                        correct_p += 1
-
-                    err += self.loss(prime=False, p=p, t=t)
-                    gradient = self.loss(prime=True, p=p, t=t)
-                    for l in reversed(self.layers):
-                        # Weights are updated in every layer, so the end gradient is not needed
-                        gradient = l.bw(gradient, l_rate)
-                        # print(gradient)
-                err /= num_s
-
-            elif self.gd_type == "bat":
+            # if self.bat_size != 10000:
+            # Prepare batches
+            for i in range(0, len(indices), self.bat_size):  # Equal to train size
+                ids = indices[i : i + self.bat_size]
+                batch_samples = train_samples[ids]
+                batch_labels = train_labels[ids]
+                err = 0
                 gradient = 0
 
-                # Forward - accumulate loss and gradient of all training set
-                for i in range(num_s):
+                for i in range(len(batch_samples)):
                     total_p += 1
-                    # Go through all FC layers
-                    p = self.predict(train_samples[i])
-                    t = train_labels[i]
+                    p = batch_samples[i].reshape(len(batch_samples[i]), 1).T
+                    p = self.predict(p)
+
+                    t = batch_labels[i]
 
                     if np.argmax(p) == np.argmax(t):
                         correct_p += 1
+
                     err += self.loss(prime=False, p=p, t=t)
                     gradient += self.loss(prime=True, p=p, t=t)
-                err /= num_s
-                gradient /= num_s
-                # Backward
+
+                # # Stops working when the average of gradient is taken
+                # gradient /= len(batch_samples)
+                err /= len(batch_samples)
+
                 for l in reversed(self.layers):
-                    # Weights are updated in every layer, so the
-                    # end gradient is not needed
+                    # Weights are updated in every layer, so the end gradient is not needed
                     gradient = l.bw(gradient, l_rate)
+
             accuracy_sum += correct_p / total_p
-            if e%10 == 0:
-                print(f"{self.gd_type}: Epoch #{e} - avg loss = {err}"
-                      f", avg Accuracy = {accuracy_sum / (e + 1)}"
-                      f", C: {correct_p}, T: {total_p}")
+            if e % 10 == 0:
+                print(
+                    f"BS = {self.bat_size}: Epoch #{e} - avg loss = {err}"
+                    f", avg Accuracy = {accuracy_sum / (e + 1)}"
+                    f", C: {correct_p}, T: {total_p}"
+                )
         print(f"Total mean accuracy during training {accuracy_sum / epochs}")
 
     def validate():

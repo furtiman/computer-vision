@@ -6,13 +6,12 @@ from mlp_cmp import mlp, fc, activation as a, loss as l, al
 TRAIN_SIZE = 10000
 TEST_SIZE = 1000
 EPOCHS = 400
-L_RATE = 0.1
+L_RATE = 0.01
 
-FC1_NEURONS = 32
-FC2_NEURONS = 32
-GDESCENT_TYPE = "stoc"  # 'stoc' | 'bat'
-# LOSS = l.ce_loss
-LOSS = l.mse
+FC1_NEURONS = 64
+FC2_NEURONS = 64
+BATCH_SIZE = 1 # 1 for stochastic descent
+LOSS = l.ce_loss # l.ce_loss | l.mse
 
 if __name__ == "__main__":
     # Mnist dataset loaded with "fetch_openml("mnist_784")", and then
@@ -36,11 +35,11 @@ if __name__ == "__main__":
     in_size = len(data[0])  # 784
     out_size = len(categories)  # 10
 
-    perceptron = mlp.MLP(in_size, out_size, LOSS, GDESCENT_TYPE)
+    perceptron = mlp.MLP(in_size, out_size, LOSS, BATCH_SIZE)
 
     fc1 = fc.FC(num_in_ft=in_size, num_out_ft=FC1_NEURONS)
     perceptron.add_layer(fc1)
-    al1 = al.AL(activation=a.softplus)
+    al1 = al.AL(activation=a.sigmoid)
     perceptron.add_layer(al1)
 
     fc2 = fc.FC(num_in_ft=FC1_NEURONS, num_out_ft=FC2_NEURONS)

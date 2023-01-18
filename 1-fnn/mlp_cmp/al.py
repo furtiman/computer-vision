@@ -18,8 +18,7 @@ class AL:
     total_al_num = 0
 
     def __init__(
-        self,
-        activation: Callable[[bool, np.array], np.array],
+        self, activation: Callable[[bool, np.array], np.array], type: str = ""
     ):
         """
         wm - weight matrix of size (num_in_ft x num_out_ft)
@@ -28,10 +27,9 @@ class AL:
         AL.total_al_num += 1  # Keep track of total fc layers number
 
         self.activation = activation
+        self.type = type
         # self.activation_prime = activation_prime
-        print(
-            f"---------Init Activation Layer {self.activation}-----------"
-        )
+        print(f"---------Init Activation Layer {self.type}-----------")
 
     def fw(self, fw_in: np.array) -> np.array:
         """Apply activation function"""
@@ -40,5 +38,12 @@ class AL:
         return self.fw_out
 
     def bw(self, bw_in: np.array, learning_rate: float) -> np.array:
-        bw_out = self.activation(prime=True, in_ft=self.input) * bw_in
+        if self.type == "sm":
+            bw_out = (
+                np.sum(self.activation(prime=True, in_ft=self.input) * bw_in, axis=0)
+                .reshape(-1, 1)
+                .T
+            )
+        else:
+            bw_out = self.activation(prime=True, in_ft=self.input) * bw_in
         return bw_out
